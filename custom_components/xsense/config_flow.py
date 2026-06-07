@@ -64,8 +64,6 @@ async def validate_input(hass: HomeAssistant, email, password) -> dict[str, Any]
         await session.load_all()
     except APIFailure as ex:
         raise CannotConnect from ex
-    if not session.has_discovered_entities():
-        raise NoDevicesFound
 
     # Return info that you want to store in the config entry.
     return {"title": f"XSense Account {session.username}"}
@@ -89,8 +87,6 @@ class XSenseConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 info = await validate_input(self.hass, email, password)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
-            except NoDevicesFound:
-                errors["base"] = "no_devices"
             except InvalidAuth:
                 errors["base"] = "invalid_auth"
             except Exception:  # pylint: disable=broad-except
@@ -127,8 +123,6 @@ class XSenseConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 _ = await validate_input(self.hass, email, password)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
-            except NoDevicesFound:
-                errors["base"] = "no_devices"
             except InvalidAuth:
                 errors["base"] = "invalid_auth"
             except Exception:  # pylint: disable=broad-except
@@ -162,8 +156,6 @@ class XSenseConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 _ = await validate_input(self.hass, email, password)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
-            except NoDevicesFound:
-                errors["base"] = "no_devices"
             except InvalidAuth:
                 errors["base"] = "invalid_auth"
             except Exception:  # pylint: disable=broad-except
@@ -190,7 +182,3 @@ class CannotConnect(HomeAssistantError):
 
 class InvalidAuth(HomeAssistantError):
     """Error to indicate there is invalid auth."""
-
-
-class NoDevicesFound(HomeAssistantError):
-    """Error to indicate the account has no discoverable X-Sense devices."""

@@ -205,11 +205,12 @@ class XSenseDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await self.xsense.load_all()
                 if not self.xsense.has_discovered_entities():
                     info = getattr(self.xsense, "discovery_info", {})
-                    raise UpdateFailed(
+                    LOGGER.warning(
                         "No X-Sense stations or devices were returned for this "
                         "account. Confirm the devices are shared to this account "
                         "and that the invitation was accepted in the X-Sense app. "
-                        f"Discovery counts: {info}"
+                        "Discovery counts: %s",
+                        info,
                     )
                 self._initialized = True
                 LOGGER.debug("Initial XSense discovery complete")
