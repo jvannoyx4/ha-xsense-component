@@ -162,6 +162,7 @@ class AsyncXSense(XSenseBase):
         self.session = session
         self._owns_session = session is None
         self.language = _ipc_language(language)
+        self.discovery_info: dict[str, Any] = {}
 
     async def _get_session(self):
         if self.session is None or self.session.closed:
@@ -386,7 +387,15 @@ class AsyncXSense(XSenseBase):
 
     async def load_all(self):
         result = {}
-        for i in await self.get_houses():
+        houses = await self.get_houses()
+        discovery_info = {
+            "houses": len(houses or []),
+            "stations": 0,
+            "devices": 0,
+            "houses_without_stations": 0,
+        }
+
+        for i in houses:
             h = House(
                 self.signer,
                 i["houseId"],
@@ -402,8 +411,34 @@ class AsyncXSense(XSenseBase):
 
             if stations := await self.get_stations(h.house_id):
                 h.set_stations(stations)
+                discovery_info["stations"] += len(h.stations)
+                discovery_info["devices"] += sum(
+                    len(station.devices) for station in h.stations.values()
+                )
+            else:
+                discovery_info["houses_without_stations"] += 1
 
         self.houses = result
+        self.discovery_info = discovery_info
+
+    def discovery_counts(self) -> dict[str, int]:
+        """Return counts from the currently loaded X-Sense discovery data."""
+        stations = sum(len(house.stations) for house in self.houses.values())
+        devices = sum(
+            len(station.devices)
+            for house in self.houses.values()
+            for station in house.stations.values()
+        )
+        return {
+            "houses": len(self.houses),
+            "stations": stations,
+            "devices": devices,
+        }
+
+    def has_discovered_entities(self) -> bool:
+        """Return whether discovery found any station or child device."""
+        counts = self.discovery_counts()
+        return counts["stations"] > 0 or counts["devices"] > 0
 
     async def register_ipc(self):
         """Register with X-Sense IPC and receive the ADDX camera token."""

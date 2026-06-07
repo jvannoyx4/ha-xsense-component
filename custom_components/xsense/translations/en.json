@@ -8,6 +8,7 @@
         "error": {
             "cannot_connect": "Failed to connect",
             "invalid_auth": "Invalid authentication",
+            "no_devices": "No X-Sense stations or devices were found for this account. Share the devices with this account in the X-Sense app and accept the invitation before adding the integration.",
             "unknown": "Unexpected error"
         },
         "step": {

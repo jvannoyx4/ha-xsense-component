@@ -23,6 +23,7 @@
     "error": {
       "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
       "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "no_devices": "No X-Sense stations or devices were found for this account. Share the devices with this account in the X-Sense app and accept the invitation before adding the integration.",
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {

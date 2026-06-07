@@ -512,6 +512,97 @@ def test_station_set_devices_matches_apk_child_device_normalization():
     assert device_obj.data["isActivate"] is True
 
 
+@pytest.mark.asyncio
+async def test_load_all_records_empty_discovery_counts(monkeypatch):
+    client = async_xsense.AsyncXSense()
+
+    async def get_houses():
+        return [
+            {
+                "houseId": "house-id",
+                "houseName": "Home",
+                "houseRegion": "US",
+                "mqttRegion": "us-east-1",
+                "mqttServer": "mqtt.example.test",
+            }
+        ]
+
+    async def get_rooms(house_id):
+        return None
+
+    async def get_stations(house_id):
+        return {}
+
+    monkeypatch.setattr(client, "get_houses", get_houses)
+    monkeypatch.setattr(client, "get_rooms", get_rooms)
+    monkeypatch.setattr(client, "get_stations", get_stations)
+
+    await client.load_all()
+
+    assert client.discovery_info == {
+        "houses": 1,
+        "stations": 0,
+        "devices": 0,
+        "houses_without_stations": 1,
+    }
+    assert client.discovery_counts() == {"houses": 1, "stations": 0, "devices": 0}
+    assert client.has_discovered_entities() is False
+
+
+@pytest.mark.asyncio
+async def test_load_all_records_station_and_device_counts(monkeypatch):
+    client = async_xsense.AsyncXSense()
+
+    async def get_houses():
+        return [
+            {
+                "houseId": "house-id",
+                "houseName": "Home",
+                "houseRegion": "US",
+                "mqttRegion": "us-east-1",
+                "mqttServer": "mqtt.example.test",
+            }
+        ]
+
+    async def get_rooms(house_id):
+        return None
+
+    async def get_stations(house_id):
+        return {
+            "stations": [
+                {
+                    "stationId": "station-id",
+                    "stationName": "Base Station",
+                    "stationSn": "station-sn",
+                    "category": "SBS50",
+                    "devices": [
+                        {
+                            "deviceId": "device-id",
+                            "deviceName": "Smoke CO Alarm",
+                            "deviceSn": "device-sn",
+                            "deviceType": "SC07-MR",
+                        }
+                    ],
+                }
+            ]
+        }
+
+    monkeypatch.setattr(client, "get_houses", get_houses)
+    monkeypatch.setattr(client, "get_rooms", get_rooms)
+    monkeypatch.setattr(client, "get_stations", get_stations)
+
+    await client.load_all()
+
+    assert client.discovery_info == {
+        "houses": 1,
+        "stations": 1,
+        "devices": 1,
+        "houses_without_stations": 0,
+    }
+    assert client.discovery_counts() == {"houses": 1, "stations": 1, "devices": 1}
+    assert client.has_discovered_entities() is True
+
+
 def test_station_set_devices_creates_apk_light_group_devices():
     test_house = house.House(None, "house-id", "Home", "US", "us-east-1", "mqtt")
     station_obj = station.Station(
